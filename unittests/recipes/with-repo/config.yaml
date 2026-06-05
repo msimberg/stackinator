@@ -5,4 +5,5 @@ spack:
     commit: v21.0
     packages:
         repo: https://github.com/spack/spack-packages.git
+        commit: master
 version: 2

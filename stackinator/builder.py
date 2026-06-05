@@ -6,6 +6,7 @@ import shutil
 import stat
 import subprocess
 import sys
+from collections import Counter
 from datetime import datetime
 
 import jinja2
@@ -547,7 +548,7 @@ class Builder:
 
     def _resolve_packages(self, packages):
         base = self.path / "repos"
-        if isinstance(packages.get("repo"), str):
+        if isinstance(packages, dict):
             return [
                 {
                     "name": "builtin",
@@ -557,6 +558,12 @@ class Builder:
                     "repo_path": "repos/spack_repo/builtin",
                 }
             ]
+
+        counts = Counter(name for entry in packages for name in entry)
+        duplicates = [name for name, count in counts.items() if count > 1]
+        if duplicates:
+            raise ValueError(f"Duplicate package repo name(s): {', '.join(set(duplicates))}")
+
         return [
             {
                 "name": name,
@@ -565,7 +572,8 @@ class Builder:
                 "path": base / name,
                 "repo_path": val.get("path", f"repos/spack_repo/{name}"),
             }
-            for name, val in packages.items()
+            for entry in packages
+            for name, val in entry.items()
         ]
 
     def _git_clone(self, name, repo, commit, path):
